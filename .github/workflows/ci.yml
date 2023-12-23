@@ -49,6 +49,7 @@ jobs:
     outputs:
       image-version: ${{ steps.image-version.outputs.image-version }}
       releases: ${{ steps.release.outputs.releases }}
+      default: ${{ steps.release.outputs.default }}
     env:
       DEFAULT_RELEASE: 'unstable'
       IMAGE_VERSION: '0.0'
@@ -103,8 +104,12 @@ jobs:
             releases_json="$(echo "${releases_json}" | jq -c -M ". + [${obj_json}]")"
           done
 
+          default=$(echo "${releases_json}" | \
+              jq ". | map(.release == \"${DEFAULT_RELEASE}\") | index(true)")
+
           echo "::group::Outputs"
           echo "releases=${releases_json}" | tee -a "${GITHUB_OUTPUT}"
+          echo "default=${default}" | tee -a "${GITHUB_OUTPUT}"
           echo "::endgroup::"
 
   base-images:
@@ -126,10 +131,32 @@ jobs:
       image_version: ${{ needs.generate-matrix.outputs.image-version }}
       tag_prefix: ${{ github.run_id }}-
 
+  latest-amd64-images:
+    needs:
+      - generate-matrix
+      - base-images
+    strategy:
+      matrix:
+        target:
+          - 'gbp'
+        include:
+          - ${{ fromJSON(needs.generate-matrix.outputs.releases)[fromJSON(needs.generate-matrix.outputs.default)] }}
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/build-image.yml
+    with:
+      vendor: ${{ matrix.vendor }}
+      release: ${{ matrix.release }}
+      target: ${{ matrix.target }}
+      image_version: ${{ needs.generate-matrix.outputs.image-version }}
+      tag_prefix: ${{ github.run_id }}-
+
   publish-staging-tags:
     needs:
       - generate-matrix
       - base-images
+      - latest-amd64-images
     if: ${{ github.event_name != 'pull_request' }}
     strategy:
       matrix:
