@@ -43,5 +43,7 @@ runs:
             -i actions/gbp/start.sh
         sed -e 's,^\(    "ghcr.io/${{ github.repository_owner }}\)/[^"]\+,\1/staging:${{ github.run_id }}-generic-tests-${{ inputs.release }},' \
             -i actions/missing-breaks/start.sh
+        sed -e 's,^\(    "ghcr.io/${{ github.repository_owner }}\)/[^"]\+,\1/staging:${{ github.run_id }}-generic-tests-${{ inputs.release }},' \
+            -i actions/rc-bugs/start.sh
 
         grep -nr ${{ github.run_id }} .

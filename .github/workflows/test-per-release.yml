@@ -232,10 +232,17 @@ jobs:
         with:
           release: ${{ inputs.release }}
 
+      - name: Check rc-bugs
+        id: rc-bugs
+        uses: ./actions/rc-bugs
+        with:
+          release: ${{ inputs.release }}
+
       - name: Upload test reports
         uses: actions/upload-artifact@v3
         with:
           name: per-action-generic-tests-${{ inputs.release }}
           path: |
             ${{ steps.missing-breaks.outputs.report_path }}
+            ${{ steps.rc-bugs.outputs.report_path }}
           if-no-files-found: error
