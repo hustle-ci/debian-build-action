@@ -90,5 +90,26 @@ jobs:
           no-cache: true
           outputs: type=image,push=true,annotation-index.org.opencontainers.image.description=${{ matrix.target }} image for ${{ matrix.vendor }}:${{ matrix.release }}
           platforms: ${{ matrix.platforms }}
+          provenance: false
           tags: ${{ steps.meta.outputs.tags }}
           target: ${{ matrix.target }}
+
+  prune-staging-images:
+    needs:
+      - base-images
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Prune staging images
+        uses: vlaurin/action-ghcr-prune@v0.5.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          organization: ${{ github.repository_owner }}
+          container: 'staging'
+          dry-run: false
+          prune-tags-regexes: |
+            ^${{ github.run_id }}-
+          prune-untagged: true
