@@ -103,9 +103,68 @@ jobs:
       # env context not allowed here, so put hard-coded string instead of env.DEFAULT_RELEASE
       image: ghcr.io/${{ github.repository_owner }}/staging:${{ github.run_id }}-base-unstable
 
+  latest-amd64-images:
+    needs:
+      # Depend on local tests before going further
+      - check-license
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target:
+          - 'gbp'
+        vendor: ['debian']
+        release:
+          # env context not allowed here, so put hard-coded string instead of env.DEFAULT_RELEASE
+          - 'unstable'
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          labels: |
+            org.opencontainers.image.description=${{ matrix.target }} image for ${{ matrix.vendor }}:${{ matrix.release }}
+            org.opencontainers.image.licenses=FSFAP
+            org.opencontainers.image.vendor=${{ github.repository_owner }}
+            org.opencontainers.image.version=${{ env.IMAGE_VERSION }}
+          images: ghcr.io/${{ github.repository_owner }}/staging
+          flavor: |
+            latest=false
+            prefix=${{ github.run_id }}-
+          tags: |
+            ${{ matrix.target }}-${{ matrix.release }}
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: 'images'
+          build-args: |
+              BASE_IMAGE=${{ matrix.vendor }}:${{ matrix.release }}
+              VENDOR=${{ matrix.vendor }}
+              RELEASE=${{ matrix.release }}
+          labels: ${{ steps.meta.outputs.labels }}
+          no-cache: true
+          outputs: type=image,annotation-index.org.opencontainers.image.description=${{ matrix.target }} image for ${{ matrix.vendor }}:${{ matrix.release }}
+          tags: ${{ steps.meta.outputs.tags }}
+          target: ${{ matrix.target }}
+
   prune-staging-images:
     needs:
       - base-images
+      - latest-amd64-images
       - check-license
     if: ${{ always() }}
     runs-on: ubuntu-latest
