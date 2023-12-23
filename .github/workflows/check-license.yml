@@ -1,0 +1,39 @@
+# Copyright 2023 You-Sheng Yang and others
+# SPDX-License-Identifier: FSFAP
+# Copying and distribution of this file, with or without modification, are
+# permitted in any medium without royalty provided the copyright notice and
+# this notice are preserved. This file is offered as-is, without any warranty.
+---
+name: 'check license'
+on:
+  workflow_call:
+    inputs:
+      image:
+        description: 'Specify a docker image to run this check'
+        type: string
+        default: ghcr.io/${{ github.repository_owner }}/base:latest
+
+jobs:
+  check-license:
+    runs-on: ubuntu-latest
+    container: ${{ inputs.image }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: 'Install prerequisites'
+        run: |
+          apt-get update && apt-get upgrade -y
+          apt-get install -y licensecheck
+      - name: 'Check license'
+        run: |
+          PROBLEMS=0
+
+          BAD_FILES=$(licensecheck -r . | grep -Ev '(README.md)'| grep UNKNOWN) || true
+          if [ -n "${BAD_FILES}" ]; then
+            echo "ERROR: Missing license statement in the following files:"
+            echo "$BAD_FILES"
+            PROBLEMS=$(($PROBLEMS + 1))
+          fi
+
+          exit $PROBLEMS

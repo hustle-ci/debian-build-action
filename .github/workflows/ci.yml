@@ -19,6 +19,7 @@ on:
 
 env:
   IMAGE_VERSION: '1'
+  DEFAULT_RELEASE: 'unstable'
 
 jobs:
   base-images:
@@ -94,9 +95,18 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           target: ${{ matrix.target }}
 
+  check-license:
+    needs:
+      - base-images
+    uses: ./.github/workflows/check-license.yml
+    with:
+      # env context not allowed here, so put hard-coded string instead of env.DEFAULT_RELEASE
+      image: ghcr.io/${{ github.repository_owner }}/staging:${{ github.run_id }}-base-unstable
+
   prune-staging-images:
     needs:
       - base-images
+      - check-license
     if: ${{ always() }}
     runs-on: ubuntu-latest
     permissions:
