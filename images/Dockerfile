@@ -60,4 +60,4 @@ RUN set -eux; \
 	; \
 	rm -rf /var/lib/apt
 
-COPY scripts/dummy.sh /usr/local/bin/dummy.sh
+COPY scripts/extract-source.sh /usr/local/bin/extract-source.sh

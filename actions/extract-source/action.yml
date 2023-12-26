@@ -4,8 +4,8 @@
 # permitted in any medium without royalty provided the copyright notice and
 # this notice are preserved. This file is offered as-is, without any warranty.
 ---
-name: 'debian-build-action'
-description: 'Debian package build action'
+name: 'extract-source-action'
+description: 'Debian package extract-source action'
 author: 'vicamo'
 
 inputs:
@@ -30,22 +30,19 @@ inputs:
 
 outputs:
   source_path:
-    description: >-
-      The actual `source_path` used.
-    value: ${{ steps.extract.outputs.source_path }}
+    description: 'The actual `source_path` used.'
   output_path:
+    description: 'The actual `output_path` used.'
+  setup_gitattributes:
+    description: 'The actual `setup_gitattributes` used.'
+  built_source_path:
     description: >-
-      The actual `output_path` used.
-    value: ${{ steps.extract.outputs.output_path }}
+      Relative path of gbp extracted source directory to GITHUB_WORKSPACE. This
+      will always be `output_path`/source.'
+  built_origtar:
+    description: 'filename of gbp extracted source tarball under `output_path`.'
 
 runs:
-  using: 'composite'
-  steps:
-    - name: Extract source
-      id: extract
-      uses: ./actions/extract-source
-      with:
-        source_path: ${{ inputs.source_path }}
-        output_path: ${{ inputs.output_path }}
-        setup_gitattributes: ${{ inputs.setup_gitattributes }}
-        source_args: ${{ inputs.source_args }}
+  using: 'docker'
+  image: ghcr.io/hustle-ci/gbp:latest
+  entrypoint: /usr/local/bin/extract-source.sh
