@@ -39,5 +39,7 @@ runs:
       run: |
         sed -e 's,^\(  image: ghcr.io/${{ github.repository_owner }}\)/gbp:.*$,\1/staging:${{ github.run_id }}-gbp-${{ env.DEFAULT_RELEASE }},' \
             -i actions/extract-source/action.yml
+        sed -e 's,^\(    "ghcr.io/${{ github.repository_owner }}\)/[^"]\+,\1/staging:${{ github.run_id }}-base-${{ inputs.release }},' \
+            -i actions/gbp/start.sh
 
         grep -nr ${{ github.run_id }} .

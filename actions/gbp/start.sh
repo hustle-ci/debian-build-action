@@ -15,6 +15,20 @@ TASK="$1"
 IMAGE="$2"
 args=(--entrypoint="/usr/local/bin/${TASK}.sh")
 
+platform=
+case "${INPUT_BUILD_ARCH:-}" in
+amd64)    platform=linux/amd64;;
+i386)     platform=linux/386;;
+arm64)    platform=linux/arm64/v8;;
+armhf)    platform=linux/arm/v7;;
+armel)    platform=linux/arm/v5;;
+mips64el) platform=linux/mips64le;;
+riscv64)  platform=linux/riscv64;;
+ppc64el)  platform=linux/ppc64le;;
+s390x)    platform=linux/s390x;;
+esac
+[ -n "${platform}" ] && args+=(--platform="${platform}")
+
 while IFS='=' read -r -d '' name value; do
   case "${name}" in
   ACTIONS_*|CI|DEB_*|GITHUB_*|INPUT_*) args+=("--env" "${name}=${value}");;
@@ -29,4 +43,4 @@ echo "::group::docker run arguments"
 echo "${args[@]}"
 echo "::endgroup::"
 exec docker run "${args[@]}" \
-    "ghcr.io/hustle-ci/${IMAGE}:${INPUT_RELEASE}"
+    "ghcr.io/hustle-ci/${IMAGE}:${INPUT_RELEASE:-latest}"

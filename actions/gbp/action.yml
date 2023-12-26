@@ -4,8 +4,8 @@
 # permitted in any medium without royalty provided the copyright notice and
 # this notice are preserved. This file is offered as-is, without any warranty.
 ---
-name: 'debian-build-action'
-description: 'Debian package build action'
+name: 'gbp-action'
+description: 'Debian package gbp action'
 author: 'vicamo'
 
 inputs:
@@ -27,19 +27,6 @@ inputs:
     description: >-
       Relative path to GITHUB_WORKSPACE where source root is stored. Default is
       `GITHUB_WORKSPACE`.
-    default: ''
-  output_path:
-    description: >-
-      Relative path to GITHUB_WORKSPACE where built artifacts should be stored.
-      Default is `source_path`/debian/output.
-    default: ''
-  setup_gitattributes:
-    description: >-
-      Enable automatic `gbp setup_gitattributes` at preparing source repository.
-      Boolean. Default: 'true'.
-    default: 'true'
-  source_args:
-    description: 'Additional arguments to `gbp buildpackage`.'
     default: ''
   build_arch:
     description: 'Debian architecture. Default: image architecture.'
@@ -64,35 +51,29 @@ inputs:
     default: ''
 
 outputs:
-  source_path:
-    description: >-
-      The actual `source_path` used.
-    value: ${{ steps.extract.outputs.source_path }}
   output_path:
     description: >-
-      The actual `output_path` used.
-    value: ${{ steps.extract.outputs.output_path }}
+      The actual `output_path` used. This will always be the parent directory of
+      the `source_path`.
+  release:
+    description: 'The actual `release` used.'
+  source_path:
+    description: 'The actual `source_path` used.'
+  build_arch:
+    description: 'The actual `build_arch` used.'
+  host_arch:
+    description: 'The actual `host_arch` used.'
+  build_type:
+    description: 'The actual `build_type` used.'
+  build_twice:
+    description: 'The actual `build_twice` used.'
+  version_bump:
+    description: 'The actual `version_bump` used.'
 
 runs:
-  using: 'composite'
-  steps:
-    - name: Extract source
-      id: extract
-      uses: ./actions/extract-source
-      with:
-        source_path: ${{ inputs.source_path }}
-        output_path: ${{ inputs.output_path }}
-        setup_gitattributes: ${{ inputs.setup_gitattributes }}
-        source_args: ${{ inputs.source_args }}
-    - name: Build binary packages
-      id: build
-      uses: ./actions/gbp
-      with:
-        release: ${{ inputs.release }}
-        source_path: ${{ steps.extract.outputs.built_source_path }}
-        build_arch: ${{ inputs.build_arch }}
-        host_arch: ${{ inputs.host_arch }}
-        build_type: ${{ inputs.build_type }}
-        build_twice: ${{ inputs.build_twice }}
-        build_args: ${{ inputs.build_args }}
-        version_bump: ${{ inputs.version_bump }}
+  using: 'docker'
+  image: 'Dockerfile'
+  args:
+    - '/start.sh'
+    - 'gbp'
+    - 'base'

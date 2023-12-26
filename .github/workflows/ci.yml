@@ -62,7 +62,7 @@ jobs:
       - name: 'Check shared files'
         run: |
           test $(md5sum $(find . -name start.sh) | awk '{print $1}' | sort -u | wc -l) -le 1
-          test $(md5sum Dockerfile | awk '{print $1}' | sort -u | wc -l) -le 1
+          test $(md5sum actions/*/Dockerfile | awk '{print $1}' | sort -u | wc -l) -le 1
 
   generate-matrix:
     runs-on: ubuntu-latest

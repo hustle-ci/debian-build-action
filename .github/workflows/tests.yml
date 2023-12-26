@@ -19,19 +19,18 @@ jobs:
   test-per-release:
     strategy:
       matrix:
-        include:
-          - ${{ fromJSON(inputs.releases)[fromJSON(inputs.default_index)] }}
+        include: ${{ fromJSON(inputs.releases) }}
     uses: ./.github/workflows/test-per-release.yml
     with:
       release: ${{ matrix.release }}
       default_release: ${{ fromJSON(inputs.releases)[fromJSON(inputs.default_index)].release }}
+      architectures: ${{ matrix.architectures }}
 
   test-full-action:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        include:
-          - ${{ fromJSON(inputs.releases)[fromJSON(inputs.default_index)] }}
+        include: ${{ fromJSON(inputs.releases) }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -48,6 +47,7 @@ jobs:
         id: top-action
         uses: ./
         with:
+          release: ${{ matrix.release }}
           source_path: ${{ steps.clone.outputs.source_path }}
           output_path: ${{ hashFiles('action.yml', 'actions/*/action.yml') }}
 
