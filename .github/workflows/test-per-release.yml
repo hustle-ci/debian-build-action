@@ -221,6 +221,10 @@ jobs:
           release: ${{ inputs.release }}
           default_release: ${{ inputs.default_release || inputs.release }}
 
+      - name: Download source tarball
+        uses: actions/download-artifact@v3
+        with:
+          name: per-action-source-${{ inputs.release }}
       - name: Download binary tarball
         uses: actions/download-artifact@v3
         with:
@@ -238,6 +242,12 @@ jobs:
         with:
           release: ${{ inputs.release }}
 
+      - name: Check lintian
+        id: lintian
+        uses: ./actions/lintian
+        with:
+          release: ${{ inputs.release }}
+
       - name: Upload test reports
         uses: actions/upload-artifact@v3
         with:
@@ -245,4 +255,6 @@ jobs:
           path: |
             ${{ steps.missing-breaks.outputs.report_path }}
             ${{ steps.rc-bugs.outputs.report_path }}
+            ${{ steps.lintian.outputs.xml_report_path }}
+            ${{ steps.lintian.outputs.html_report_path }}
           if-no-files-found: error
