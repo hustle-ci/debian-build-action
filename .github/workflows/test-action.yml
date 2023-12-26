@@ -1,0 +1,42 @@
+# Copyright 2023 You-Sheng Yang and others
+# SPDX-License-Identifier: FSFAP
+# Copying and distribution of this file, with or without modification, are
+# permitted in any medium without royalty provided the copyright notice and
+# this notice are preserved. This file is offered as-is, without any warranty.
+---
+name: 'test per action'
+on:
+  workflow_call:
+    inputs:
+      release:
+        description: 'Distribution release name, e.g. unstable for debian.'
+        type: string
+        default: 'unstable'
+
+jobs:
+  extract-source:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - uses: ./.github/actions/fix-testing-image-tag
+        with:
+          release: ${{ inputs.release }}
+      - uses: ./.github/actions/clone-test-project
+        id: clone
+        with:
+          release: ${{ inputs.release }}
+
+      - name: Extract source package
+        id: extract
+        uses: ./actions/extract-source
+        with:
+          source-path: ${{ steps.clone.outputs.source-path }}
+          output-path: ${{ hashFiles('action.yml', 'actions/*/action.yml') }}
+
+      - name: Upload source package
+        uses: actions/upload-artifact@v3
+        with:
+          name: per-action-${{ inputs.release }}
+          path: |
+            ${{ steps.extract.outputs.output-path }}

@@ -73,11 +73,49 @@ jobs:
       target: ${{ matrix.target }}
       tag_prefix: ${{ github.run_id }}-
 
+  test-per-action:
+    needs:
+      - latest-amd64-images
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          # env context not allowed here, so put hard-coded string instead of env.DEFAULT_RELEASE
+          - release: 'unstable'
+    users: .github/workflows/test-action.yml
+    with:
+      release: ${{ matrix.release }}
+
+  test-full-action:
+    needs:
+      - latest-amd64-images
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          # env context not allowed here, so put hard-coded string instead of env.DEFAULT_RELEASE
+          - release: 'unstable'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - uses: ./.github/actions/fix-testing-image-tag
+        with:
+          release: ${{ matrix.release }}
+      - uses: ./.github/actions/clone-test-project
+        id: clone
+        with:
+          release: ${{ matrix.release }}
+
+      - name: Full test
+        uses: ./
+        with:
+          source-path: ${{ steps.clone.outputs.source-path }}
+          output-path: ${{ hashFiles('action.yml', 'actions/*/action.yml') }}
+
   prune-staging-images:
     needs:
-      - base-images
-      - latest-amd64-images
-      - check-license
+      - test-full-action
+      - test-per-action
     if: ${{ always() }}
     runs-on: ubuntu-latest
     permissions:

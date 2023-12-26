@@ -1,0 +1,46 @@
+# Copyright 2023 You-Sheng Yang and others
+# SPDX-License-Identifier: FSFAP
+# Copying and distribution of this file, with or without modification, are
+# permitted in any medium without royalty provided the copyright notice and
+# this notice are preserved. This file is offered as-is, without any warranty.
+---
+name: 'debian-build-action'
+description: 'Debian package build action'
+author: 'vicamo'
+
+inputs:
+  source-path:
+    description: >-
+      Relative path to GITHUB_WORKSPACE where source root is stored.
+    default: ''
+  output-path:
+    description: >-
+      Relative path to GITHUB_WORKSPACE where built artifacts should be stored.
+      Default is `source_path`/debian/output.
+    default: ''
+  setup-gitattributes:
+    description: >-
+      Enable automatic `gbp setup-gitattributes` at preparing source repository.
+      Default: true.
+    default: true
+  source-args:
+    description: 'Additional arguments to `gbp buildpackage`.'
+    default: ''
+
+outputs:
+  output-path:
+    description: >-
+      The actual `output-path` used.
+    value: ${{ steps.extract.outputs.output-path }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Extract source
+      id: extract
+      uses: ./actions/extract-source
+      with:
+        source-path: ${{ inputs.source-path }}
+        output-path: ${{ inputs.output-path }}
+        setup-gitattributes: ${{ inputs.setup-gitattributes }}
+        source-args: ${{ inputs.source-args }}
