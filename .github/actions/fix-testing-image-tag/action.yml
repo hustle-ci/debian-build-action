@@ -47,5 +47,7 @@ runs:
             -i actions/rc-bugs/start.sh
         sed -e 's,^\(    "ghcr.io/${{ github.repository_owner }}\)/[^"]\+,\1/staging:${{ github.run_id }}-lintian-${{ inputs.release }},' \
             -i actions/lintian/start.sh
+        sed -e 's,^\(  image: ghcr.io/${{ github.repository_owner }}\)/blhc:.*$,\1/staging:${{ github.run_id }}-blhc-${{ env.DEFAULT_RELEASE }},' \
+            -i actions/blhc/action.yml
 
         grep -nr ${{ github.run_id }} .

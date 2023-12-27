@@ -75,6 +75,9 @@ inputs:
     description: >-
       Arguments appended to lintian's generated arguments.
     default: ''
+  blhc_args:
+    description: 'Additional arguments to `blhc`.'
+    default: ''
 
 outputs:
   source_path:
@@ -152,3 +155,9 @@ runs:
         show_overrides: ${{ inputs.lintian_show_overrides }}
         suppress_tags: ${{ inputs.lintian_suppress_tags }}
         args: ${{ inputs.lintian_args }}
+    - name: blhc test
+      uses: ./actions/blhc
+      with:
+        source_path: ${{ steps.build.outputs.output_path }}
+        output_path: ${{ steps.build.outputs.output_path }}
+        args: ${{ inputs.blhc_args }}

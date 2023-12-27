@@ -250,6 +250,9 @@ jobs:
         with:
           release: ${{ inputs.release }}
 
+      - name: Check blhc
+        uses: ./actions/blhc
+
       - name: Upload test reports
         uses: actions/upload-artifact@v3
         with:
