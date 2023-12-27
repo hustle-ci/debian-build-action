@@ -244,6 +244,8 @@ jobs:
 
       - name: Check lintian
         id: lintian
+        # https://github.com/hustle-ci/debian-build-action/issues/2
+        if: ${{ inputs.release != 'experimental' }}
         uses: ./actions/lintian
         with:
           release: ${{ inputs.release }}
@@ -255,6 +257,6 @@ jobs:
           path: |
             ${{ steps.missing-breaks.outputs.report_path }}
             ${{ steps.rc-bugs.outputs.report_path }}
-            ${{ steps.lintian.outputs.xml_report_path }}
-            ${{ steps.lintian.outputs.html_report_path }}
+            ${{ (inputs.release != 'experimental') && steps.lintian.outputs.xml_report_path || '' }}
+            ${{ (inputs.release != 'experimental') && steps.lintian.outputs.html_report_path || '' }}
           if-no-files-found: error
