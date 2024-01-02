@@ -57,7 +57,7 @@ jobs:
             for alias in ${{ inputs.aliases }}; do \
               echo "type=semver,pattern=${alias}-{{version}}"; \
               echo "type=semver,pattern=${alias}-{{major}},enable=${{ startsWith(github.ref, 'refs/tags/v0.') && 'false' || 'true' }}"; \
-              echo "type=raw,value=${alias},enable={{is_default_branch}}"; \
+              echo "type=raw,value=${alias},enable=${{ github.ref_name == 'testme' && 'true' || 'false' }}"; \
             done; \
             echo "EOF"; \
             echo "targets=${targets_json}"; \
