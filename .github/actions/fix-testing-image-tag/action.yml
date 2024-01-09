@@ -1,0 +1,53 @@
+# Copyright 2023 You-Sheng Yang and others
+# SPDX-License-Identifier: FSFAP
+# Copying and distribution of this file, with or without modification, are
+# permitted in any medium without royalty provided the copyright notice and
+# this notice are preserved. This file is offered as-is, without any warranty.
+---
+name: 'fix-testing-image-tag'
+description: 'Fix testing image tag'
+author: 'vicamo'
+
+inputs:
+  release:
+    description: >-
+      Specify the target release to run the workflow. By default, everything
+      will run on the 'unstable' suite. The following releases are currently
+      supported:
+
+      * experimental
+
+      * unstable (default)
+
+      * testing
+
+      * stable
+    default: 'unstable'
+  default_release:
+    description: >-
+      The default release to be used for actions with no release variants. Empty
+      string as an alias to `inputs.release`.
+    default: ''
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Modify action metadata for testing
+      shell: bash
+      env:
+        DEFAULT_RELEASE: ${{ inputs.default_release || inputs.release }}
+      run: |
+        sed -e 's,^\(  image: ghcr.io/${{ github.repository_owner }}\)/gbp:.*$,\1/staging:${{ github.run_id }}-gbp-${{ env.DEFAULT_RELEASE }},' \
+            -i actions/extract-source/action.yml
+        sed -e 's,^\(    "ghcr.io/${{ github.repository_owner }}\)/[^"]\+,\1/staging:${{ github.run_id }}-base-${{ inputs.release }},' \
+            -i actions/gbp/start.sh
+        sed -e 's,^\(    "ghcr.io/${{ github.repository_owner }}\)/[^"]\+,\1/staging:${{ github.run_id }}-generic-tests-${{ inputs.release }},' \
+            -i actions/missing-breaks/start.sh
+        sed -e 's,^\(    "ghcr.io/${{ github.repository_owner }}\)/[^"]\+,\1/staging:${{ github.run_id }}-generic-tests-${{ inputs.release }},' \
+            -i actions/rc-bugs/start.sh
+        sed -e 's,^\(    "ghcr.io/${{ github.repository_owner }}\)/[^"]\+,\1/staging:${{ github.run_id }}-lintian-${{ inputs.release }},' \
+            -i actions/lintian/start.sh
+        sed -e 's,^\(  image: ghcr.io/${{ github.repository_owner }}\)/blhc:.*$,\1/staging:${{ github.run_id }}-blhc-${{ env.DEFAULT_RELEASE }},' \
+            -i actions/blhc/action.yml
+
+        grep -nr ${{ github.run_id }} .

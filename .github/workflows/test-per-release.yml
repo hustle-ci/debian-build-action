@@ -1,0 +1,265 @@
+# Copyright 2023 You-Sheng Yang and others
+# SPDX-License-Identifier: FSFAP
+# Copying and distribution of this file, with or without modification, are
+# permitted in any medium without royalty provided the copyright notice and
+# this notice are preserved. This file is offered as-is, without any warranty.
+---
+name: 'test per release'
+on:
+  workflow_call:
+    inputs:
+      release:
+        description: 'Distribution release name, e.g. unstable for debian.'
+        type: string
+        default: 'unstable'
+      default_release:
+        description: >-
+          The default release to be used for actions with no release variants.
+          Empty string as an alias to `inputs.release`.
+        type: string
+        default: ''
+      architectures:
+        description: 'Space-separated debian architecture names.'
+        type: string
+        required: true
+
+env:
+  ARCHIVED_SOURCE_TAR_SUFFIX: .source.tar.gz
+
+jobs:
+  extract-source:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - uses: ./.github/actions/fix-testing-image-tag
+        with:
+          release: ${{ inputs.release }}
+          default_release: ${{ inputs.default_release || inputs.release }}
+      - uses: ./.github/actions/clone-test-project
+        id: clone
+        with:
+          release: ${{ inputs.release }}
+
+      - name: Extract source package
+        id: extract
+        uses: ./actions/extract-source
+        with:
+          source_path: ${{ steps.clone.outputs.source_path }}
+          output_path: ${{ hashFiles('action.yml', 'actions/*/action.yml') }}
+
+      # Github ations/upload-artifact does not retain artifact permissions.
+      # See: https://github.com/actions/upload-artifact/issues/38
+      - name: Archive built source directory
+        run: |
+          cd ${{ steps.extract.outputs.output_path }}
+
+          name=${{ steps.extract.outputs.built_origtar }}
+          name="${name%.orig.*}${ARCHIVED_SOURCE_TAR_SUFFIX}"
+          tar acpf "${name}" -C source .
+
+          rm -rf source
+
+      - name: Upload source package
+        # Don't use v4 unless https://github.com/actions/download-artifact/issues/249 solved.
+        uses: actions/upload-artifact@v3
+        with:
+          name: per-action-source-${{ inputs.release }}
+          path: |
+            ${{ steps.extract.outputs.output_path }}
+          if-no-files-found: error
+
+  generate-matrix:
+    outputs:
+      full-build: ${{ steps.generate.outputs.full-build }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install prerequisites
+        run: |
+          echo "::group::Apt"
+          sudo apt-get update --quiet
+          sudo apt-get install --no-install-recommends --yes jq
+          echo "::endgroup::"
+
+          echo "::group::jq version"
+          jq --version
+          echo "::endgroup::"
+
+      - name: Fetch supported architectures
+        id: generate
+        run: |
+          full_build="[]"
+          for arch in ${{ inputs.architectures }}; do
+            attrs="\"build-arch\": \"${arch}\""
+            full_build="$(echo "${full_build}" | jq -c -M ". + [{${attrs}}]")"
+          done
+
+          first_non_amd64_arch="$(echo "${full_build}" | jq -c -M -r '[.[] | select(."build-arch" != "amd64")][0]."build-arch"')"
+          attrs="\"build-arch\": \"amd64\", \"host-arch\": \"${first_non_amd64_arch}\""
+          full_build="$(echo "${full_build}" | jq -c -M ". + [{${attrs}}]")"
+
+          # continue-on-error on known failure architectures: <release>:(build-arch|host-arch):<arch>
+          coes=()
+          for coe in "${coes[@]}"; do
+            r="${coe%%:*}"; coe="${coe#*:}"; a="${coe#*:}"; m="${coe%:*}"
+            [ "${r}" = "${{ inputs.release }}" ] \
+                && full_build="$(echo "${full_build}" | jq -c -M ".[map(.\"${m}\" == \"${a}\") | index(true)].\"continue-on-error\" = \"true\"")"
+          done
+
+          echo "::group::Outputs"
+          echo "full-build=${full_build}" | tee -a "${GITHUB_OUTPUT}"
+          echo "::endgroup::"
+
+  full-build:
+    needs:
+      - extract-source
+      - generate-matrix
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.generate-matrix.outputs.full-build) }}
+    runs-on: ubuntu-latest
+    continue-on-error: ${{ !!matrix.continue-on-error }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - uses: ./.github/actions/fix-testing-image-tag
+        with:
+          release: ${{ inputs.release }}
+          default_release: ${{ inputs.default_release || inputs.release }}
+
+      - name: Download source tarball
+        uses: actions/download-artifact@v3
+        with:
+          name: per-action-source-${{ inputs.release }}
+      # Github ations/upload-artifact does not retain artifact permissions.
+      # See: https://github.com/actions/upload-artifact/issues/38
+      - name: Extract archived source directory
+        run: |
+          mkdir source
+          tar axf *"${ARCHIVED_SOURCE_TAR_SUFFIX}" -C source
+
+      # Add support for more platforms with QEMU (optional)
+      # https://github.com/docker/setup-qemu-action
+      - name: Set up QEMU
+        if: ${{ matrix.build-arch != 'amd64' || (matrix.host-arch && matrix.host-arch != 'amd64') }}
+        uses: docker/setup-qemu-action@v3
+
+      - name: Build package
+        id: full-build
+        uses: ./actions/gbp
+        env:
+          # We're not interested in whether package specific test cases work at
+          # this moment.
+          DEB_BUILD_OPTIONS: nocheck
+        with:
+          release: ${{ inputs.release }}
+          source_path: 'source'
+          build_arch: ${{ matrix.build-arch }}
+          host_arch: ${{ matrix.host-arch }}
+
+      - name: Upload binary package
+        uses: actions/upload-artifact@v3
+        with:
+          name: per-action-binary-${{ steps.full-build.outputs.release }}-${{ steps.full-build.outputs.build_arch }}-${{ steps.full-build.outputs.host_arch }}
+          path: |
+            ${{ steps.full-build.outputs.output_path }}/*.build
+            ${{ steps.full-build.outputs.output_path }}/*.buildinfo
+            ${{ steps.full-build.outputs.output_path }}/*.changes
+            ${{ steps.full-build.outputs.output_path }}/*.deb
+            ${{ steps.full-build.outputs.output_path }}/*.debian.tar.*
+            ${{ steps.full-build.outputs.output_path }}/*.dsc
+          if-no-files-found: error
+
+  build-types:
+    needs:
+      - extract-source
+    strategy:
+      fail-fast: false
+      matrix:
+        build-type:
+          - source
+          - binary
+          - any
+          - all
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - uses: ./.github/actions/fix-testing-image-tag
+        with:
+          release: ${{ inputs.release }}
+          default_release: ${{ inputs.default_release || inputs.release }}
+
+      - name: Download source tarball
+        uses: actions/download-artifact@v3
+        with:
+          name: per-action-source-${{ inputs.release }}
+      # Github ations/upload-artifact does not retain artifact permissions.
+      # See: https://github.com/actions/upload-artifact/issues/38
+      - name: Extract archived source directory
+        run: |
+          mkdir source
+          tar axf *"${ARCHIVED_SOURCE_TAR_SUFFIX}" -C source
+
+      - name: Build package
+        uses: ./actions/gbp
+        with:
+          release: ${{ inputs.release }}
+          source_path: 'source'
+          build_type: ${{ matrix.build-type }}
+
+  generic-tests:
+    needs:
+      - full-build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - uses: ./.github/actions/fix-testing-image-tag
+        with:
+          release: ${{ inputs.release }}
+          default_release: ${{ inputs.default_release || inputs.release }}
+
+      - name: Download source tarball
+        uses: actions/download-artifact@v3
+        with:
+          name: per-action-source-${{ inputs.release }}
+      - name: Download binary tarball
+        uses: actions/download-artifact@v3
+        with:
+          name: per-action-binary-${{ inputs.release }}-amd64-amd64
+
+      - name: Check missing-breaks
+        id: missing-breaks
+        uses: ./actions/missing-breaks
+        with:
+          release: ${{ inputs.release }}
+
+      - name: Check rc-bugs
+        id: rc-bugs
+        uses: ./actions/rc-bugs
+        with:
+          release: ${{ inputs.release }}
+
+      - name: Check lintian
+        id: lintian
+        # https://github.com/hustle-ci/debian-build-action/issues/2
+        if: ${{ inputs.release != 'experimental' }}
+        uses: ./actions/lintian
+        with:
+          release: ${{ inputs.release }}
+
+      - name: Check blhc
+        uses: ./actions/blhc
+
+      - name: Upload test reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: per-action-generic-tests-${{ inputs.release }}
+          path: |
+            ${{ steps.missing-breaks.outputs.report_path }}
+            ${{ steps.rc-bugs.outputs.report_path }}
+            ${{ (inputs.release != 'experimental') && steps.lintian.outputs.xml_report_path || '' }}
+            ${{ (inputs.release != 'experimental') && steps.lintian.outputs.html_report_path || '' }}
+          if-no-files-found: error

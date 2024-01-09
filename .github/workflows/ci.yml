@@ -9,6 +9,8 @@ on:
   push:
     branches:
       - main
+    tags:
+      - 'v*.*'
     paths-ignore:
       - LICENSE
       - 'README.*'
@@ -42,11 +44,33 @@ jobs:
 
           exit $PROBLEMS
 
+      - name: 'reviewdog/shellcheck'
+        uses: haya14busa/action-cond@v1
+        id: reporter
+        with:
+          cond: ${{ github.event_name == 'pull_request' }}
+          if_true: "github-pr-review"
+          if_false: "github-check"
+      - uses: reviewdog/action-shellcheck@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          reporter: ${{ steps.reporter.outputs.value }}
+          level: warning
+          exclude: |
+            */.git/*
+
+      - name: 'Check shared files'
+        run: |
+          test $(md5sum $(find . -name start.sh) | awk '{print $1}' | sort -u | wc -l) -le 1
+          test $(md5sum actions/*/Dockerfile | awk '{print $1}' | sort -u | wc -l) -le 1
+
   generate-matrix:
     runs-on: ubuntu-latest
     outputs:
       image-version: ${{ steps.image-version.outputs.image-version }}
       releases: ${{ steps.release.outputs.releases }}
+      default_index: ${{ steps.release.outputs.default_index }}
+      releases-targets: ${{ steps.release-target.outputs.releases-targets }}
     env:
       DEFAULT_RELEASE: 'unstable'
       IMAGE_VERSION: '0.0'
@@ -101,11 +125,31 @@ jobs:
             releases_json="$(echo "${releases_json}" | jq -c -M ". + [${obj_json}]")"
           done
 
+          default_index=$(echo "${releases_json}" | \
+              jq ". | map(.release == \"${DEFAULT_RELEASE}\") | index(true)")
+
           echo "::group::Outputs"
           echo "releases=${releases_json}" | tee -a "${GITHUB_OUTPUT}"
+          echo "default_index=${default_index}" | tee -a "${GITHUB_OUTPUT}"
+          echo "::endgroup::"
+
+      - name: Generate release matrix with selected targets
+        id: release-target
+        run: |
+          targets=(generic-tests lintian)
+          targets_json="$(jq -c -M -n '$ARGS.positional' --args "${targets[@]}")"
+          releases_json='${{ steps.release.outputs.releases }}'
+          output_json="$(echo "${targets_json}" | jq -c -M "${releases_json} as \$releases | [.[] as \$in | (\$releases[] | . + {\"target\": \$in})]")"
+
+          # https://github.com/hustle-ci/debian-build-action/issues/2
+          output_json="$(echo "${output_json}" | jq -c -M "del(.[] | select(.release == \"experimental\" and .target == \"lintian\"))")"
+
+          echo "::group::Outputs"
+          echo "releases-targets=${output_json}" | tee -a "${GITHUB_OUTPUT}"
           echo "::endgroup::"
 
   base-images:
+    runs-on: ubuntu-latest
     needs:
       - generate-matrix
       - static-checks
@@ -115,18 +159,105 @@ jobs:
     permissions:
       contents: read
       packages: write
-    uses: ./.github/workflows/build-image.yml
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - uses: ./.github/actions/build-image
+        with:
+          vendor: ${{ matrix.vendor }}
+          release: ${{ matrix.release }}
+          architectures: ${{ matrix.architectures }}
+          target: 'base'
+          image_version: ${{ needs.generate-matrix.outputs.image-version }}
+          tag_prefix: ${{ github.run_id }}-
+          ghcr_password: ${{ secrets.GITHUB_TOKEN }}
+
+  latest-amd64-images:
+    runs-on: ubuntu-latest
+    needs:
+      - generate-matrix
+      - base-images
+    strategy:
+      matrix:
+        target:
+          - 'autopkgtest'
+          - 'blhc'
+          - 'gbp'
+        include:
+          - ${{ fromJSON(needs.generate-matrix.outputs.releases)[fromJSON(needs.generate-matrix.outputs.default_index)] }}
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - uses: ./.github/actions/build-image
+        with:
+          vendor: ${{ matrix.vendor }}
+          release: ${{ matrix.release }}
+          target: ${{ matrix.target }}
+          image_version: ${{ needs.generate-matrix.outputs.image-version }}
+          tag_prefix: ${{ github.run_id }}-
+          ghcr_password: ${{ secrets.GITHUB_TOKEN }}
+
+  all-releases-only-amd64-images:
+    runs-on: ubuntu-latest
+    needs:
+      - generate-matrix
+      - base-images
+    strategy:
+      matrix:
+        include: ${{ fromJSON(needs.generate-matrix.outputs.releases-targets) }}
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - uses: ./.github/actions/build-image
+        with:
+          vendor: ${{ matrix.vendor }}
+          release: ${{ matrix.release }}
+          target: ${{ matrix.target }}
+          image_version: ${{ needs.generate-matrix.outputs.image-version }}
+          tag_prefix: ${{ github.run_id }}-
+          ghcr_password: ${{ secrets.GITHUB_TOKEN }}
+
+  tests:
+    needs:
+      - generate-matrix
+      - base-images
+      - latest-amd64-images
+      - all-releases-only-amd64-images
+    uses: ./.github/workflows/tests.yml
+    with:
+      releases: ${{ needs.generate-matrix.outputs.releases }}
+      default_index: ${{ needs.generate-matrix.outputs.default_index }}
+
+  publish-staging-tags:
+    needs:
+      - generate-matrix
+      - tests
+    strategy:
+      matrix:
+        include: ${{ fromJSON(needs.generate-matrix.outputs.releases) }}
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/publish-tags.yml
     with:
       vendor: ${{ matrix.vendor }}
       release: ${{ matrix.release }}
-      architectures: ${{ matrix.architectures }}
-      target: 'base'
-      image_version: ${{ needs.generate-matrix.outputs.image-version }}
-      tag_prefix: ${{ github.run_id }}-
+      aliases: ${{ matrix.aliases }}
+      image-version: ${{ needs.generate-matrix.outputs.image-version }}
+      dry-run: ${{ github.event_name == 'pull_request' }}
 
   prune-staging-tags:
     needs:
-      - base-images
+      - publish-staging-tags
     if: ${{ always() }}
     permissions:
       contents: read

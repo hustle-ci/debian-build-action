@@ -1,0 +1,48 @@
+# Copyright 2023 You-Sheng Yang and others
+# SPDX-License-Identifier: FSFAP
+# Copying and distribution of this file, with or without modification, are
+# permitted in any medium without royalty provided the copyright notice and
+# this notice are preserved. This file is offered as-is, without any warranty.
+---
+name: 'extract-source-action'
+description: 'Debian package extract-source action'
+author: 'vicamo'
+
+inputs:
+  source_path:
+    description: >-
+      Relative path to GITHUB_WORKSPACE where source root is stored. Default is
+      `GITHUB_WORKSPACE`.
+    default: ''
+  output_path:
+    description: >-
+      Relative path to GITHUB_WORKSPACE where built artifacts should be stored.
+      Default is `source_path`/debian/output.
+    default: ''
+  setup_gitattributes:
+    description: >-
+      Enable automatic `gbp setup_gitattributes` at preparing source repository.
+      Boolean. Default: 'true'.
+    default: 'true'
+  source_args:
+    description: 'Additional arguments to `gbp buildpackage`.'
+    default: ''
+
+outputs:
+  source_path:
+    description: 'The actual `source_path` used.'
+  output_path:
+    description: 'The actual `output_path` used.'
+  setup_gitattributes:
+    description: 'The actual `setup_gitattributes` used.'
+  built_source_path:
+    description: >-
+      Relative path of gbp extracted source directory to GITHUB_WORKSPACE. This
+      will always be `output_path`/source.'
+  built_origtar:
+    description: 'filename of gbp extracted source tarball under `output_path`.'
+
+runs:
+  using: 'docker'
+  image: ghcr.io/hustle-ci/gbp:latest
+  entrypoint: /usr/local/bin/extract-source.sh
