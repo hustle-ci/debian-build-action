@@ -160,3 +160,23 @@ RUN set -eux; \
 	:
 
 COPY scripts/autopkgtest.sh /usr/local/bin/autopkgtest.sh
+
+################################################################################
+
+FROM base AS reprotest
+
+RUN set -eux; \
+	apt-get update --quiet; \
+	apt-get upgrade -y; \
+	eatmydata apt-get install --no-install-recommends -y \
+		disorderfs \
+		faketime \
+		locales-all \
+		patch \
+		reprotest \
+		sudo \
+		unzip \
+		xxd \
+	; \
+	rm -rf /var/lib/apt; \
+	:
