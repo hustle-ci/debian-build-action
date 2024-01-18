@@ -27,6 +27,9 @@ inputs:
   autopkgtest_image:
     description: autopkgtest docker image
     default: ''
+  reprotest_image:
+    description: reprotest docker image
+    default: ''
   disable_extract_source:
     default: 'false'
   disable_missing_breaks:
@@ -38,6 +41,8 @@ inputs:
   disable_blhc:
     default: 'false'
   disable_autopkgtest:
+    default: 'false'
+  disable_reprotest:
     default: 'false'
   vendor:
     description: Distribution vendor, e.g. debian.
@@ -113,6 +118,9 @@ inputs:
     default: ''
   autopkgtest_args:
     description: 'Additional arguments to `autopkgtest`.'
+    default: ''
+  reprotest_args:
+    description: 'Additional arguments to `reprotest`.'
     default: ''
 
 outputs:
@@ -216,4 +224,13 @@ runs:
         source_path: ${{ steps.build.outputs.output_path }}
         output_path: ${{ steps.build.outputs.output_path }}
         args: ${{ inputs.autopkgtest_args }}
+        testbed: ${{ inputs.base_image }}
+    - name: reprotest test
+      if: ${{ ! contains(fromJSON('["yes","true","1"]'), inputs.disable_reprotest) }}
+      uses: ./actions/reprotest
+      with:
+        image: ${{ inputs.reprotest_image }}
+        release: ${{ inputs.release }}
+        source_path: ${{ steps.build.outputs.output_path }}
+        args: ${{ inputs.reprotest_args }}
         testbed: ${{ inputs.base_image }}

@@ -180,3 +180,5 @@ RUN set -eux; \
 	; \
 	rm -rf /var/lib/apt; \
 	:
+
+COPY scripts/reprotest.sh /usr/local/bin/reprotest.sh
