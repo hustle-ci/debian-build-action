@@ -317,3 +317,22 @@ jobs:
         with:
           image: ${{ format('ghcr.io/{0}/staging:{1}-autopkgtest-{2}', github.repository_owner, github.run_id, inputs.default_release) }}
           testbed: ${{ format('ghcr.io/{0}/staging:{1}-base-{2}', github.repository_owner, github.run_id, inputs.release) }}
+
+  piuparts:
+    needs:
+      - full-build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download binary tarball
+        uses: actions/download-artifact@v4
+        with:
+          name: per-action-binary-${{ inputs.release }}-amd64-amd64
+
+      - name: Piuparts
+        uses: ./actions/piuparts
+        with:
+          image: ${{ format('ghcr.io/{0}/staging:{1}-piuparts-{2}', github.repository_owner, github.run_id, inputs.default_release) }}
+          testbed: ${{ format('ghcr.io/{0}/staging:{1}-base-{2}', github.repository_owner, github.run_id, inputs.release) }}

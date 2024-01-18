@@ -176,3 +176,5 @@ RUN set -eux; \
 	; \
 	rm -rf /var/lib/apt; \
 	:
+
+COPY scripts/piuparts.sh /usr/local/bin/piuparts.sh
