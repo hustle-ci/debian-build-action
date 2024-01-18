@@ -160,3 +160,19 @@ RUN set -eux; \
 	:
 
 COPY scripts/autopkgtest.sh /usr/local/bin/autopkgtest.sh
+
+################################################################################
+
+FROM base AS piuparts
+
+RUN set -eux; \
+	apt-get update --quiet; \
+	apt-get upgrade -y; \
+	eatmydata apt-get install --no-install-recommends -y \
+		docker.io \
+		piuparts \
+		local-apt-repository \
+		usrmerge \
+	; \
+	rm -rf /var/lib/apt; \
+	:

@@ -202,6 +202,7 @@ jobs:
           - 'autopkgtest'
           - 'blhc'
           - 'gbp'
+          - 'piuparts'
         include:
           - ${{ fromJSON(needs.generate-matrix.outputs.releases)[fromJSON(needs.generate-matrix.outputs.default_index)] }}
     permissions:
