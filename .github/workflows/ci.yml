@@ -5,6 +5,7 @@
 # this notice are preserved. This file is offered as-is, without any warranty.
 ---
 name: 'CI'
+# yamllint disable-line rule:truthy
 on:
   push:
     branches:
