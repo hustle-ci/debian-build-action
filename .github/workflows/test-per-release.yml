@@ -136,7 +136,7 @@ jobs:
       - name: Extract archived source directory
         run: |
           mkdir source
-          tar axf *"${ARCHIVED_SOURCE_TAR_SUFFIX}" -C source
+          tar axf ./*"${ARCHIVED_SOURCE_TAR_SUFFIX}" -C source
 
       # Add support for more platforms with QEMU (optional)
       # https://github.com/docker/setup-qemu-action
@@ -197,7 +197,7 @@ jobs:
       - name: Extract archived source directory
         run: |
           mkdir source
-          tar axf *"${ARCHIVED_SOURCE_TAR_SUFFIX}" -C source
+          tar axf ./*"${ARCHIVED_SOURCE_TAR_SUFFIX}" -C source
 
       - name: Build package
         uses: ./actions/gbp

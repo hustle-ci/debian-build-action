@@ -132,19 +132,21 @@ jobs:
             annotations+=(--annotation "${line}"); \
           done <<<"${DOCKER_METADATA_OUTPUT_ANNOTATIONS}"
 
-          staging_img=ghcr.io/${{ github.repository_owner }}/staging:${{ github.run_id }}-${{ matrix.target }}-${{ inputs.release }}
-          if [ ${{ matrix.target }} = "base" ]; then
+          staging_img="ghcr.io/${{ github.repository_owner }}/staging:${{ github.run_id }}-${{ matrix.target }}-${{ inputs.release }}"
+          if [ "${{ matrix.target }}" = "base" ]; then
             digests="$(docker buildx imagetools inspect --format '{{range .Manifest.Manifests}}{{println .Digest}}{{end}}' "${staging_img}")"
             echo "::group::Digests"
             echo "${digests}"
             echo "::endgroup::"
 
             echo "::group::Create image from ${staging_img}"
+            # shellcheck disable=SC2086
             echo "${digests}" | sed "s,^,${staging_img}@," | \
                 xargs docker buildx imagetools create ${DRY_RUN_ARG} "${tags[@]}" "${annotations[@]}"
             echo "::endgroup::"
           else
             echo "::group::Create image from ${staging_img}"
+            # shellcheck disable=SC2086
             docker buildx imagetools create ${DRY_RUN_ARG} "${tags[@]}" "${staging_img}"
             echo "::endgroup::"
           fi

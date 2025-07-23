@@ -45,7 +45,7 @@ jobs:
           if [ -n "${BAD_FILES}" ]; then
             echo "ERROR: Missing license statement in the following files:"
             echo "$BAD_FILES"
-            PROBLEMS=$(($PROBLEMS + 1))
+            PROBLEMS=$((PROBLEMS + 1))
           fi
 
           exit $PROBLEMS
