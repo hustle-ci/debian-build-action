@@ -4,14 +4,18 @@
 # permitted in any medium without royalty provided the copyright notice and
 # this notice are preserved. This file is offered as-is, without any warranty.
 
+#checkov:skip=CKV_DOCKER_2:Don't need HEALTHCHECK in these images
+#checkov:skip=CKV_DOCKER_3:Running as root so far
+
 ARG BASE_IMAGE=debian
 
 ################################################################################
 
-FROM bash AS dummy
+FROM bash:5.3 AS dummy
 
 ################################################################################
 
+#checkov:skip=CKV_DOCKER_7:It's a build argument
 FROM ${BASE_IMAGE} AS base
 
 ARG VENDOR
