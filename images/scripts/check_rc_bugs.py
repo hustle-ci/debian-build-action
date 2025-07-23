@@ -22,11 +22,10 @@ import logging
 import os
 import sys
 
-import debianbts
-import debian.deb822 as deb822
 import debian.changelog as changelog
-
-from junit_xml import TestSuite, TestCase
+import debian.deb822 as deb822
+import debianbts
+from junit_xml import TestCase, TestSuite
 
 
 def process_options():

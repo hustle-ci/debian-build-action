@@ -31,8 +31,7 @@ import sys
 import debian.deb822 as deb822
 import debian.debfile as debfile
 import debian.debian_support as debian_support
-
-from junit_xml import TestSuite, TestCase
+from junit_xml import TestCase, TestSuite
 
 
 def get_pkg_file(lines):

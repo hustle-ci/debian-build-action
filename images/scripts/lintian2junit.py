@@ -5,10 +5,11 @@
 # permitted in any medium without royalty provided the copyright notice and
 # this notice are preserved. This file is offered as-is, without any warranty.
 
-import sys
-import logging
 import argparse
-from junit_xml import TestSuite, TestCase
+import logging
+import sys
+
+from junit_xml import TestCase, TestSuite
 
 
 def main(filename, ignore_warnings=False):
