@@ -34,7 +34,7 @@ INPUT_ARGS="${INPUT_ARGS:-}"
 
 while IFS='=' read -r -d '' name value; do
   case "${name}" in
-  INPUT_*) echo "${name}=${value}";;
+  INPUT_*) echo "${name}=${value}" ;;
   esac
 done < <(env -0)
 echo "::endgroup::"
@@ -44,7 +44,7 @@ lintian --version
 
 args=(--display-info --pedantic)
 
-IFS=" " read -r -a additional_args <<< "${INPUT_ARGS}"
+IFS=" " read -r -a additional_args <<<"${INPUT_ARGS}"
 [ ${#additional_args[@]} -eq 0 ] || args+=("${additional_args[@]}")
 
 args+=(--suppress-tags "${INPUT_SUPPRESS_TAGS}")
@@ -52,7 +52,7 @@ args+=(--suppress-tags "${INPUT_SUPPRESS_TAGS}")
 [ "${INPUT_SHOW_OVERRIDES}" = true ] && args+=(--show-overrides)
 
 fatal_args=()
-if SUDO lintian --fail-on error > /dev/null ; then
+if SUDO lintian --fail-on error >/dev/null; then
   fatal_args+=(--fail-on error)
   [ "${INPUT_FATAL_WARNING}" = true ] && fatal_args+=(--fail-on warning)
 fi
@@ -61,23 +61,23 @@ fi
 # See: https://unix.stackexchange.com/questions/528361/dash-not-expanding-glob-wildcards-in-chroot
 changes="$(find . -maxdepth 1 -name \*.changes)"
 output=/tmp/lintian.output
-SUDO lintian "${args[@]}" ${fatal_args[@]+"${fatal_args[@]}"} "${changes}" | \
-    SUDO tee "${output}" || ECODE=$?
+SUDO lintian "${args[@]}" ${fatal_args[@]+"${fatal_args[@]}"} "${changes}" |
+  SUDO tee "${output}" || ECODE=$?
 [ "${INPUT_FATAL_WARNING}" = true ] && grep -q '^W: ' "${output}" && ECODE=3
 
-SUDO lintian2junit.py --lintian-file "${output}" > "${INPUT_OUTPUT_PATH}"/lintian.xml
+SUDO lintian2junit.py --lintian-file "${output}" >"${INPUT_OUTPUT_PATH}"/lintian.xml
 
 # Generate HTML report
 SUDO lintian "${args[@]}" \
-    --exp-output format=html \
-    "${changes}" > "${INPUT_OUTPUT_PATH}"/lintian.html || true
+  --exp-output format=html \
+  "${changes}" >"${INPUT_OUTPUT_PATH}"/lintian.html || true
 echo "::endgroup::"
 
 echo "::group::Outputs"
-{ \
-  echo "output_path=$(relativepath "${GITHUB_WORKSPACE}" "${INPUT_OUTPUT_PATH}")"; \
-  echo "xml_report_path=$(relativepath "${GITHUB_WORKSPACE}" "${INPUT_OUTPUT_PATH}/lintian.xml")"; \
-  echo "html_report_path=$(relativepath "${GITHUB_WORKSPACE}" "${INPUT_OUTPUT_PATH}/lintian.html")"; \
+{
+  echo "output_path=$(relativepath "${GITHUB_WORKSPACE}" "${INPUT_OUTPUT_PATH}")"
+  echo "xml_report_path=$(relativepath "${GITHUB_WORKSPACE}" "${INPUT_OUTPUT_PATH}/lintian.xml")"
+  echo "html_report_path=$(relativepath "${GITHUB_WORKSPACE}" "${INPUT_OUTPUT_PATH}/lintian.html")"
 } | tee -a "${GITHUB_OUTPUT}"
 echo "::endgroup::"
 

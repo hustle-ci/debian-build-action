@@ -27,7 +27,7 @@ INPUT_ARGS="${INPUT_ARGS:-}"
 
 while IFS='=' read -r -d '' name value; do
   case "${name}" in
-  INPUT_*) echo "${name}=${value}";;
+  INPUT_*) echo "${name}=${value}" ;;
   esac
 done < <(env -0)
 echo "::endgroup::"
@@ -37,7 +37,7 @@ echo "::endgroup::"
 build="$(find . -maxdepth 1 -name \*.build)"
 
 echo "::group::blhc arguments"
-IFS=" " read -r -a args <<< "${INPUT_ARGS}"
+IFS=" " read -r -a args <<<"${INPUT_ARGS}"
 args=(--debian --line-numbers --color ${args[@]+"${args[@]}"})
 echo "::endgroup::"
 
@@ -46,7 +46,7 @@ SUDO blhc "${args[@]}" "${build}" || [ $? -eq 1 ]
 echo "::endgroup::"
 
 echo "::group::Outputs"
-{ \
-  echo "output_path=$(relativepath "${GITHUB_WORKSPACE}" "${INPUT_OUTPUT_PATH}")"; \
+{
+  echo "output_path=$(relativepath "${GITHUB_WORKSPACE}" "${INPUT_OUTPUT_PATH}")"
 } | tee -a "${GITHUB_OUTPUT}"
 echo "::endgroup::"

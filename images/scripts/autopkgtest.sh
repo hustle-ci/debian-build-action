@@ -29,7 +29,7 @@ INPUT_ARGS="${INPUT_ARGS:-}"
 
 while IFS='=' read -r -d '' name value; do
   case "${name}" in
-  INPUT_*) echo "${name}=${value}";;
+  INPUT_*) echo "${name}=${value}" ;;
   esac
 done < <(env -0)
 echo "::endgroup::"
@@ -40,20 +40,23 @@ echo "::endgroup::"
 
 echo "::group::Generate report"
 autopkgtest "${INPUT_SOURCE_PATH}"/*.changes \
-    --setup-commands="apt-get update" \
-    --output-dir="${INPUT_OUTPUT_PATH}"/autopkgtest \
-    --apt-upgrade \
-    -- \
-    docker \
-    --remote \
-    "${INPUT_TESTBED}" || { ret=$?; [ ${ret} -eq 8 ] || [ ${ret} -eq 2 ]; }
+  --setup-commands="apt-get update" \
+  --output-dir="${INPUT_OUTPUT_PATH}"/autopkgtest \
+  --apt-upgrade \
+  -- \
+  docker \
+  --remote \
+  "${INPUT_TESTBED}" || {
+  ret=$?
+  [ ${ret} -eq 8 ] || [ ${ret} -eq 2 ]
+}
 echo "::endgroup::"
 
 echo "::group::Outputs"
-{ \
-  echo "output_path=$(relativepath "${GITHUB_WORKSPACE}" "${INPUT_OUTPUT_PATH}")"; \
-  echo "release=${INPUT_RELEASE}"; \
-  echo "source_path=$(relativepath "${GITHUB_WORKSPACE}" "${INPUT_SOURCE_PATH}")"; \
-  echo "testbed=${INPUT_TESTBED}"; \
+{
+  echo "output_path=$(relativepath "${GITHUB_WORKSPACE}" "${INPUT_OUTPUT_PATH}")"
+  echo "release=${INPUT_RELEASE}"
+  echo "source_path=$(relativepath "${GITHUB_WORKSPACE}" "${INPUT_SOURCE_PATH}")"
+  echo "testbed=${INPUT_TESTBED}"
 } | tee -a "${GITHUB_OUTPUT}"
 echo "::endgroup::"

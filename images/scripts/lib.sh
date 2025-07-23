@@ -13,16 +13,22 @@ INPUT_SOURCE_PATH="$(realpath "${INPUT_SOURCE_PATH:-${GITHUB_WORKSPACE}}")"
 # $1: the path to a file or a directory whose owner user/group to be created
 # $2: optional user name
 # $3: optional group name
-create_user_for()
-{
-  local path="$1"; shift
+create_user_for() {
+  local path="$1"
+  shift
   _UID="$(stat --format=%u "${path}")"
   _GID="$(stat --format=%g "${path}")"
 
   _USER="u${_UID}"
-  [ $# -lt 1 ] || { _USER="$1"; shift; }
+  [ $# -lt 1 ] || {
+    _USER="$1"
+    shift
+  }
   _GROUP="g${_GID}"
-  [ $# -lt 1 ] || { _GROUP="$1"; shift; }
+  [ $# -lt 1 ] || {
+    _GROUP="$1"
+    shift
+  }
 
   if ! getent group "${_GID}"; then
     groupadd --gid "${_GID}" "${_GROUP}"
@@ -30,20 +36,18 @@ create_user_for()
 
   if ! getent passwd "${_UID}"; then
     useradd --uid "${_UID}" --gid "${_GID}" \
-        --no-create-home \
-        "${_USER}"
+      --no-create-home \
+      "${_USER}"
   fi
 }
 
-SUDO()
-{
+SUDO() {
   sudo --group="${_GROUP}" --user="${_USER}" --preserve-env -- "$@"
 }
 
 # $1: variable value
 # $2: default value
-fixup_boolean()
-{
+fixup_boolean() {
   local var="$1"
   [ -n "$var" ] || var="$2"
   if echo "${var}" | grep -qE '^(1|yes|true)$'; then
@@ -55,8 +59,7 @@ fixup_boolean()
 
 # $1: parent directory
 # $2: absolute path
-relativepath()
-{
+relativepath() {
   local pdir="${1%/}"
   local abspath="${2%/}"
   local ret
@@ -65,15 +68,17 @@ relativepath()
   if [ -z "${ret}" ]; then
     ret="${abspath#"${pdir}"}"
     case "${ret}" in
-      "${abspath}")
-        # the input path is not fully under the specified parent directory.
-        ;;
-      "")
-        # the input path is the parent directory itself.
-        ret=. ;;
-      *)
-        # the input path is under the specified parent directory.
-        ret="${ret#/}" ;;
+    "${abspath}")
+      # the input path is not fully under the specified parent directory.
+      ;;
+    "")
+      # the input path is the parent directory itself.
+      ret=.
+      ;;
+    *)
+      # the input path is under the specified parent directory.
+      ret="${ret#/}"
+      ;;
     esac
   fi
 

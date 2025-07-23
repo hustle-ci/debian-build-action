@@ -13,3 +13,10 @@ repos:
     rev: 6.0.1
     hooks:
       - id: isort
+  - repo: https://github.com/pecigonzalo/pre-commit-shfmt
+    rev: "v2.2.0"
+    hooks:
+      - id: shell-fmt
+        args:
+          - -i
+          - "2"
