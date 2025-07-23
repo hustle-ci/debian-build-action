@@ -31,23 +31,27 @@ from junit_xml import TestSuite, TestCase
 
 def process_options():
     kw = {
-        'format': '[%(levelname)s] %(message)s',
+        "format": "[%(levelname)s] %(message)s",
     }
 
     arg_parser = argparse.ArgumentParser(
-        description='List rc bugs not being addressed.')
-    arg_parser.add_argument('-c', '--changes-file',
-                            default=os.environ.get('CHANGES_FILE', ''))
+        description="List rc bugs not being addressed."
+    )
     arg_parser.add_argument(
-        '-o', '--output', help='Output file',
-        default='{}/check_rc_bugs.xml'.format(
-            os.environ.get('EXPORT_DIR', '.')))
-    arg_parser.add_argument('-v', '--verbose', action='store_true')
-    arg_parser.add_argument('--debug', action='store_true')
+        "-c", "--changes-file", default=os.environ.get("CHANGES_FILE", "")
+    )
+    arg_parser.add_argument(
+        "-o",
+        "--output",
+        help="Output file",
+        default="{}/check_rc_bugs.xml".format(os.environ.get("EXPORT_DIR", ".")),
+    )
+    arg_parser.add_argument("-v", "--verbose", action="store_true")
+    arg_parser.add_argument("--debug", action="store_true")
     args = arg_parser.parse_args()
 
     if args.debug:
-        kw['level'] = logging.DEBUG
+        kw["level"] = logging.DEBUG
 
     logging.basicConfig(**kw)
 
@@ -56,16 +60,20 @@ def process_options():
 
 def get_changes_info(filename):
     if not filename:
-        logging.warning('No changes file specified')
+        logging.warning("No changes file specified")
         sys.exit(1)
 
-    with open(filename, encoding='utf-8') as fp:
+    with open(filename, encoding="utf-8") as fp:
         changes = deb822.Changes(fp)
         changelog_block = changelog.ChangeBlock(
-            changes=changes.get('Changes', '').split('\n'))
-        logging.debug('Bugs closed: %s', changelog_block.bugs_closed)
-        return (changes['Source'], changes.get('Binary', '').split(),
-                set(changelog_block.bugs_closed))
+            changes=changes.get("Changes", "").split("\n")
+        )
+        logging.debug("Bugs closed: %s", changelog_block.bugs_closed)
+        return (
+            changes["Source"],
+            changes.get("Binary", "").split(),
+            set(changelog_block.bugs_closed),
+        )
 
 
 def merged_dupe(merged_bugs, current, bug_nrs):
@@ -79,9 +87,9 @@ def merged_dupe(merged_bugs, current, bug_nrs):
 
 
 def get_bug_nrs(source_name, binaries):
-    bug_nrs = set(debianbts.get_bugs(src=source_name, status='open'))
+    bug_nrs = set(debianbts.get_bugs(src=source_name, status="open"))
     for binary in binaries:
-        bug_nrs.update(debianbts.get_bugs(package=binary, status='open'))
+        bug_nrs.update(debianbts.get_bugs(package=binary, status="open"))
     return bug_nrs
 
 
@@ -101,16 +109,17 @@ def generate_test_cases(bug_reports, closes, bug_nrs, options):
         if bug.done:
             continue
         name = bug.package if bug.package else bug.source
-        tags_str = '({})'.format(','.join(bug.tags)) if bug.tags else ''
+        tags_str = "({})".format(",".join(bug.tags)) if bug.tags else ""
         summary = bug.summary if bug.summary else bug.subject
-        url = 'https://bugs.debian.org/{}'.format(bug.bug_num)
+        url = "https://bugs.debian.org/{}".format(bug.bug_num)
         test_case = TestCase(name, bug.bug_num)
         test_case.stdout = str(bug)
-        msg = '{name}[{bug.bug_num}]/{bug.severity}{tags} {summary} {url}'.format(
-            name=name, bug=bug, tags=tags_str, summary=summary, url=url)
+        msg = "{name}[{bug.bug_num}]/{bug.severity}{tags} {summary} {url}".format(
+            name=name, bug=bug, tags=tags_str, summary=summary, url=url
+        )
         if options.verbose:
             print(msg)
-        if bug.severity in ('critical', 'grave', 'serious'):
+        if bug.severity in ("critical", "grave", "serious"):
             test_case.add_error_info(msg)
         else:
             test_case.add_skipped_info(msg)
@@ -127,11 +136,11 @@ def main():
     bug_nrs = get_bug_nrs(source_name, binaries)
     bug_reports = debianbts.get_status(bug_nrs)
     test_cases = generate_test_cases(bug_reports, closes, bug_nrs, options)
-    test_suite = TestSuite('Check_RC_BUGS', test_cases)
-    with open(options.output, 'w', encoding='utf-8') as output_file:
+    test_suite = TestSuite("Check_RC_BUGS", test_cases)
+    with open(options.output, "w", encoding="utf-8") as output_file:
         output_file.write(TestSuite.to_xml_string([test_suite]))
     return 1 if any(test_case.is_error() for test_case in test_cases) else 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())
