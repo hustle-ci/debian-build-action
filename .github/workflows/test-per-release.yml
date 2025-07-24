@@ -4,17 +4,17 @@
 # permitted in any medium without royalty provided the copyright notice and
 # this notice are preserved. This file is offered as-is, without any warranty.
 ---
-name: 'test per release'
+name: "test per release"
 # yamllint disable-line rule:truthy
 on:
   workflow_call:
     inputs:
       vendor:
-        description: 'Distribution vendor.'
+        description: "Distribution vendor."
         type: string
         required: true
       release:
-        description: 'Distribution release name, e.g. unstable for debian.'
+        description: "Distribution release name, e.g. unstable for debian."
         type: string
         required: true
       default_release:
@@ -23,7 +23,7 @@ on:
         type: string
         required: true
       architectures:
-        description: 'Space-separated debian architecture names.'
+        description: "Space-separated debian architecture names."
         type: string
         required: true
 
@@ -154,7 +154,7 @@ jobs:
         with:
           image: ${{ format('ghcr.io/{0}/staging:{1}-base-{2}', github.repository_owner, github.run_id, inputs.release) }}
           release: ${{ inputs.release }}
-          source_path: 'source'
+          source_path: "source"
           build_arch: ${{ matrix.build-arch }}
           host_arch: ${{ matrix.host-arch }}
 
@@ -208,7 +208,7 @@ jobs:
         with:
           image: ${{ format('ghcr.io/{0}/staging:{1}-base-{2}', github.repository_owner, github.run_id, inputs.release) }}
           release: ${{ inputs.release }}
-          source_path: 'source'
+          source_path: "source"
           build_type: ${{ matrix.build-type }}
 
   missing-breaks:

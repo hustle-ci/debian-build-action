@@ -4,21 +4,21 @@
 # permitted in any medium without royalty provided the copyright notice and
 # this notice are preserved. This file is offered as-is, without any warranty.
 ---
-name: 'publish tags'
+name: "publish tags"
 # yamllint disable-line rule:truthy
 on:
   workflow_call:
     inputs:
       vendor:
-        description: 'Distribution vendor.'
+        description: "Distribution vendor."
         type: string
         required: true
       release:
-        description: 'Distribution release name, e.g. unstable for debian.'
+        description: "Distribution release name, e.g. unstable for debian."
         type: string
         required: true
       aliases:
-        description: 'Space-separated release alias names.'
+        description: "Space-separated release alias names."
         type: string
         required: true
       image-version:

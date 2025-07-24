@@ -4,14 +4,14 @@
 # permitted in any medium without royalty provided the copyright notice and
 # this notice are preserved. This file is offered as-is, without any warranty.
 ---
-name: 'autopkgtest-action'
-description: 'Debian package autopkgtest action'
-author: 'vicamo'
+name: "autopkgtest-action"
+description: "Debian package autopkgtest action"
+author: "vicamo"
 
 inputs:
   image:
     description: Target docker image to launch.
-    default: 'ghcr.io/hustle-ci/autopkgtest:latest'
+    default: "ghcr.io/hustle-ci/autopkgtest:latest"
   release:
     description: >-
       Specify the target release to run the workflow. By default, everything
@@ -25,25 +25,25 @@ inputs:
       * testing
 
       * stable
-    default: 'unstable'
+    default: "unstable"
   source_path:
     description: >-
       Relative path to GITHUB_WORKSPACE where source root is stored. Default is
       `GITHUB_WORKSPACE`.
-    default: ''
+    default: ""
   output_path:
     description: >-
       Relative path to GITHUB_WORKSPACE where built artifacts should be stored.
       Default is `source_path`/debian/output.
-    default: ''
+    default: ""
   args:
-    description: 'Additional arguments to `autopkgtest`.'
-    default: ''
+    description: "Additional arguments to `autopkgtest`."
+    default: ""
   testbed:
     description: >-
       Docker testbed image.
       Default: `ghcr.io/${GITHUB_REPOSITORY_OWNER}/base:${INPUT_RELEASE}`
-    default: ''
+    default: ""
 
 outputs:
   output_path:
@@ -51,18 +51,18 @@ outputs:
       The actual `output_path` used. This will always be the parent directory of
       the `source_path`.
   release:
-    description: 'The actual `release` used.'
+    description: "The actual `release` used."
   source_path:
-    description: 'The actual `source_path` used.'
+    description: "The actual `source_path` used."
   testbed:
-    description: 'The actual `testbed` used.'
+    description: "The actual `testbed` used."
 
 runs:
-  using: 'docker'
-  image: 'ghcr.io/hustle-ci/launcher:latest'
+  using: "docker"
+  image: "ghcr.io/hustle-ci/launcher:latest"
   args:
-    - '/start.sh'
-    - '--entrypoint'
-    - '/usr/local/bin/autopkgtest.sh'
-    - '--'
+    - "/start.sh"
+    - "--entrypoint"
+    - "/usr/local/bin/autopkgtest.sh"
+    - "--"
     - ${{ inputs.image }}

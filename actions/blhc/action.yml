@@ -4,27 +4,27 @@
 # permitted in any medium without royalty provided the copyright notice and
 # this notice are preserved. This file is offered as-is, without any warranty.
 ---
-name: 'blhc-action'
-description: 'Debian package blhc action'
-author: 'vicamo'
+name: "blhc-action"
+description: "Debian package blhc action"
+author: "vicamo"
 
 inputs:
   image:
     description: Target docker image to launch.
-    default: 'ghcr.io/hustle-ci/blhc:latest'
+    default: "ghcr.io/hustle-ci/blhc:latest"
   source_path:
     description: >-
       Relative path to GITHUB_WORKSPACE where debian build file is stored.
       Default is `GITHUB_WORKSPACE`.
-    default: ''
+    default: ""
   output_path:
     description: >-
       Relative path to GITHUB_WORKSPACE where built artifacts should be stored.
       Default is `source_path`/debian/output.
-    default: ''
+    default: ""
   args:
-    description: 'Additional arguments to `blhc`.'
-    default: ''
+    description: "Additional arguments to `blhc`."
+    default: ""
 
 outputs:
   output_path:
@@ -32,11 +32,11 @@ outputs:
       The actual `output_path` used.
 
 runs:
-  using: 'docker'
-  image: 'ghcr.io/hustle-ci/launcher:latest'
+  using: "docker"
+  image: "ghcr.io/hustle-ci/launcher:latest"
   args:
-    - '/start.sh'
-    - '--entrypoint'
-    - '/usr/local/bin/blhc.sh'
-    - '--'
+    - "/start.sh"
+    - "--entrypoint"
+    - "/usr/local/bin/blhc.sh"
+    - "--"
     - ${{ inputs.image }}

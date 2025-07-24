@@ -4,34 +4,34 @@
 # permitted in any medium without royalty provided the copyright notice and
 # this notice are preserved. This file is offered as-is, without any warranty.
 ---
-name: 'build-image'
-description: 'Build component images'
-author: 'vicamo'
+name: "build-image"
+description: "Build component images"
+author: "vicamo"
 
 inputs:
   vendor:
-    description: 'Distribution vendor.'
+    description: "Distribution vendor."
     required: true
   release:
-    description: 'Distribution release name.'
+    description: "Distribution release name."
     required: true
   architectures:
-    description: 'Space-separated debian architecture names.'
-    default: 'amd64'
+    description: "Space-separated debian architecture names."
+    default: "amd64"
   target:
-    description: 'Target image stage.'
+    description: "Target image stage."
     required: true
   image_version:
-    description: 'Value for org.opencontainers.image.version.'
+    description: "Value for org.opencontainers.image.version."
     required: true
   tag_prefix:
-    description: 'String prefix for built image tag.'
+    description: "String prefix for built image tag."
     required: true
   ghcr_password:
     required: true
 
 runs:
-  using: 'composite'
+  using: "composite"
   steps:
     - name: Transform docker platforms
       id: transform
@@ -74,8 +74,7 @@ runs:
         echo "qemu=${qemu}" | tee -a "${GITHUB_OUTPUT}"
         echo "::endgroup::"
 
-    -
-      # Add support for more platforms with QEMU (optional)
+    - # Add support for more platforms with QEMU (optional)
       # https://github.com/docker/setup-qemu-action
       name: Set up QEMU
       uses: docker/setup-qemu-action@v3
@@ -116,11 +115,11 @@ runs:
     - name: Build and push
       uses: docker/build-push-action@v5
       with:
-        context: 'images'
+        context: "images"
         build-args: |
-            BASE_IMAGE=${{ inputs.vendor }}:${{ inputs.release }}
-            VENDOR=${{ inputs.vendor }}
-            RELEASE=${{ inputs.release }}
+          BASE_IMAGE=${{ inputs.vendor }}:${{ inputs.release }}
+          VENDOR=${{ inputs.vendor }}
+          RELEASE=${{ inputs.release }}
         labels: ${{ steps.meta.outputs.labels }}
         annotations: ${{ contains(steps.transform.outputs.platforms, ',') && steps.meta.outputs.annotations || '' }}
         no-cache: true

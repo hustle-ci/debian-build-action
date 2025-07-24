@@ -4,44 +4,44 @@
 # permitted in any medium without royalty provided the copyright notice and
 # this notice are preserved. This file is offered as-is, without any warranty.
 ---
-name: 'debian-build-action'
-description: 'Debian package build action'
-author: 'vicamo'
+name: "debian-build-action"
+description: "Debian package build action"
+author: "vicamo"
 
 inputs:
   base_image:
     description: base docker image
-    default: ''
+    default: ""
   gbp_image:
     description: gbp docker image
-    default: ''
+    default: ""
   generic_tests_image:
     description: generic-tests docker image
-    default: ''
+    default: ""
   lintian_image:
     description: lintian docker image
-    default: ''
+    default: ""
   blhc_image:
     description: blhc docker image
-    default: ''
+    default: ""
   autopkgtest_image:
     description: autopkgtest docker image
-    default: ''
+    default: ""
   disable_extract_source:
-    default: 'false'
+    default: "false"
   disable_missing_breaks:
-    default: 'false'
+    default: "false"
   disable_rc_bugs:
-    default: 'false'
+    default: "false"
   disable_lintian:
-    default: 'false'
+    default: "false"
   disable_blhc:
-    default: 'false'
+    default: "false"
   disable_autopkgtest:
-    default: 'false'
+    default: "false"
   vendor:
     description: Distribution vendor, e.g. debian.
-    default: 'debian'
+    default: "debian"
   release:
     description: >-
       Specify the target release to run the workflow. By default, everything
@@ -55,65 +55,65 @@ inputs:
       * testing
 
       * stable
-    default: 'unstable'
+    default: "unstable"
   source_path:
     description: >-
       Relative path to GITHUB_WORKSPACE where source root is stored. Default is
       `GITHUB_WORKSPACE`.
-    default: ''
+    default: ""
   output_path:
     description: >-
       Relative path to GITHUB_WORKSPACE where built artifacts should be stored.
       Default is `source_path`/debian/output.
-    default: ''
+    default: ""
   setup_gitattributes:
     description: >-
       Enable automatic `gbp setup_gitattributes` at preparing source repository.
       Boolean. Default: 'true'.
-    default: 'true'
+    default: "true"
   source_args:
-    description: 'Additional arguments to `gbp buildpackage`.'
-    default: ''
+    description: "Additional arguments to `gbp buildpackage`."
+    default: ""
   build_arch:
-    description: 'Debian architecture. Default: image architecture.'
-    default: ''
+    description: "Debian architecture. Default: image architecture."
+    default: ""
   host_arch:
-    description: 'Debian architecture. Default: same as `build_arch`.'
-    default: ''
+    description: "Debian architecture. Default: same as `build_arch`."
+    default: ""
   build_type:
-    description: 'all|any|binary|source|full. Default: full`.'
-    default: 'full'
+    description: "all|any|binary|source|full. Default: full`."
+    default: "full"
   build_twice:
     description: >-
       Build the package twice. Boolean. Default: false.
-    default: 'false'
+    default: "false"
   build_args:
-    description: 'Additional arguments to `dpkg-buildpackage`.'
-    default: ''
+    description: "Additional arguments to `dpkg-buildpackage`."
+    default: ""
   version_bump:
     description: >-
       Automatically bump debian version. Boolean. Default 'false' when
       `build_type` is 'source'; 'true' otherwise.
-    default: ''
+    default: ""
   lintian_fatal_warning:
-    description: 'Fail the test at warning condition. Default: false.'
-    default: 'false'
+    description: "Fail the test at warning condition. Default: false."
+    default: "false"
   lintian_show_overrides:
-    description: 'To make Lintian show overridden tags. Default: false.'
-    default: 'false'
+    description: "To make Lintian show overridden tags. Default: false."
+    default: "false"
   lintian_suppress_tags:
-    description: 'Suppress the listed tags.'
-    default: ''
+    description: "Suppress the listed tags."
+    default: ""
   lintian_args:
     description: >-
       Arguments appended to lintian's generated arguments.
-    default: ''
+    default: ""
   blhc_args:
-    description: 'Additional arguments to `blhc`.'
-    default: ''
+    description: "Additional arguments to `blhc`."
+    default: ""
   autopkgtest_args:
-    description: 'Additional arguments to `autopkgtest`.'
-    default: ''
+    description: "Additional arguments to `autopkgtest`."
+    default: ""
 
 outputs:
   source_path:
@@ -142,7 +142,7 @@ outputs:
     value: ${{ steps.lintian.outputs.html_report_path }}
 
 runs:
-  using: 'composite'
+  using: "composite"
   steps:
     - name: Extract source
       id: extract

@@ -42,8 +42,6 @@ jobs:
           VALIDATE_JSCPD: false
           # TODO: fix pylint errors/warnings
           VALIDATE_PYTHON_PYLINT: false
-          # TODO: fix prettier errors/warnings
-          VALIDATE_YAML_PRETTIER: false
 
   licensecheck:
     runs-on: ubuntu-latest
