@@ -25,7 +25,7 @@ SUDO mkdir -vp "${INPUT_OUTPUT_PATH}"
 
 while IFS='=' read -r -d '' name value; do
   case "${name}" in
-  INPUT_*) echo "${name}=${value}";;
+  INPUT_*) echo "${name}=${value}" ;;
   esac
 done < <(env -0)
 echo "::endgroup::"
@@ -34,13 +34,13 @@ echo "::group::Generate report"
 # Do not use glob directly here.
 # See: https://unix.stackexchange.com/questions/528361/dash-not-expanding-glob-wildcards-in-chroot
 SUDO check_rc_bugs.py -v \
-    -o "${INPUT_OUTPUT_PATH}"/rc_bugs.xml \
-    --changes-file "$(find . -maxdepth 1 -name \*.changes)"
+  -o "${INPUT_OUTPUT_PATH}"/rc_bugs.xml \
+  --changes-file "$(find . -maxdepth 1 -name \*.changes)"
 echo "::endgroup::"
 
 echo "::group::Outputs"
-{ \
-  echo "output_path=$(relativepath "${GITHUB_WORKSPACE}" "${INPUT_OUTPUT_PATH}")"; \
-  echo "report_path=$(relativepath "${GITHUB_WORKSPACE}" "${INPUT_OUTPUT_PATH}/rc_bugs.xml")"; \
+{
+  echo "output_path=$(relativepath "${GITHUB_WORKSPACE}" "${INPUT_OUTPUT_PATH}")"
+  echo "report_path=$(relativepath "${GITHUB_WORKSPACE}" "${INPUT_OUTPUT_PATH}/rc_bugs.xml")"
 } | tee -a "${GITHUB_OUTPUT}"
 echo "::endgroup::"

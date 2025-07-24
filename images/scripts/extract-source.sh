@@ -29,7 +29,7 @@ INPUT_SOURCE_ARGS="${INPUT_SOURCE_ARGS:-}"
 
 while IFS='=' read -r -d '' name value; do
   case "${name}" in
-  INPUT_*) echo "${name}=${value}";;
+  INPUT_*) echo "${name}=${value}" ;;
   esac
 done < <(env -0)
 echo "::endgroup::"
@@ -48,11 +48,10 @@ if [ "${INPUT_SETUP_GITATTRIBUTES}" = true ]; then
 fi
 echo "::endgroup::"
 
-
 echo "::group::orig tarball extraction"
-read -r -a BUILD_ARGS <<< "${INPUT_SOURCE_ARGS}"
-if find . -maxdepth 3 -wholename "*/debian/source/format" -exec cat {} \; | \
-    grep -q '3.0 (gitarchive)'; then
+read -r -a BUILD_ARGS <<<"${INPUT_SOURCE_ARGS}"
+if find . -maxdepth 3 -wholename "*/debian/source/format" -exec cat {} \; |
+  grep -q '3.0 (gitarchive)'; then
   eatmydata apt-get install --no-install-recommends -y \
     dpkg-source-gitarchive
 
@@ -89,7 +88,7 @@ echo "::endgroup::"
 
 cd "${INPUT_OUTPUT_PATH}" || exit 1
 DEBIANIZED_SOURCE=$(find . -maxdepth 3 -wholename "*/debian/changelog" | sed -e 's%/\w*/\w*$%%')
-if [ ! "${DEBIANIZED_SOURCE}" ] ; then
+if [ ! "${DEBIANIZED_SOURCE}" ]; then
   echo "Error: No valid debianized source tree found."
   exit 1
 fi
@@ -106,11 +105,11 @@ du -sh
 echo "::endgroup::"
 
 echo "::group::Outputs"
-{ \
-  echo "source_path=$(relativepath "${GITHUB_WORKSPACE}" "${INPUT_SOURCE_PATH}")"; \
-  echo "output_path=$(relativepath "${GITHUB_WORKSPACE}" "${INPUT_OUTPUT_PATH}")"; \
-  echo "setup_gitattributes=${INPUT_SETUP_GITATTRIBUTES}"; \
-  echo "built_source_path=$(relativepath "${GITHUB_WORKSPACE}" "${INPUT_OUTPUT_PATH}/source")"; \
-  echo "built_origtar=$(find . -maxdepth 1 -type f -name \*.orig.tar.\* ! -name \*.asc -printf %f)"; \
+{
+  echo "source_path=$(relativepath "${GITHUB_WORKSPACE}" "${INPUT_SOURCE_PATH}")"
+  echo "output_path=$(relativepath "${GITHUB_WORKSPACE}" "${INPUT_OUTPUT_PATH}")"
+  echo "setup_gitattributes=${INPUT_SETUP_GITATTRIBUTES}"
+  echo "built_source_path=$(relativepath "${GITHUB_WORKSPACE}" "${INPUT_OUTPUT_PATH}/source")"
+  echo "built_origtar=$(find . -maxdepth 1 -type f -name \*.orig.tar.\* ! -name \*.asc -printf %f)"
 } | tee -a "${GITHUB_OUTPUT}"
 echo "::endgroup::"

@@ -40,16 +40,16 @@ INPUT_VERSION_BUMP="$(fixup_boolean "${INPUT_VERSION_BUMP}" "${version_bump_defa
 
 while IFS='=' read -r -d '' name value; do
   case "${name}" in
-  INPUT_*) echo "${name}=${value}";;
+  INPUT_*) echo "${name}=${value}" ;;
   esac
 done < <(env -0)
 echo "::endgroup::"
 
 # Check if architecture is buildable
 
-if [ "${INPUT_BUILD_TYPE}" != full ] \
-    && [ "${INPUT_BUILD_TYPE}" != binary ] \
-    && [ "${INPUT_BUILD_TYPE}" != source ]; then
+if [ "${INPUT_BUILD_TYPE}" != full ] &&
+  [ "${INPUT_BUILD_TYPE}" != binary ] &&
+  [ "${INPUT_BUILD_TYPE}" != source ]; then
   if [ "${INPUT_BUILD_TYPE}" = all ]; then
     pattern="all"
   elif [ "${INPUT_BUILD_TYPE}" = any ]; then
@@ -75,7 +75,7 @@ test -z "${CROSS_COMPILING}" || dpkg --add-architecture "${INPUT_HOST_ARCH}"
 
 # Add deb-src entries
 if [ -f /etc/apt/sources.list ]; then
-  sed -n '/^deb\s/s//deb-src /p' /etc/apt/sources.list > /etc/apt/sources.list.d/deb-src.list
+  sed -n '/^deb\s/s//deb-src /p' /etc/apt/sources.list >/etc/apt/sources.list.d/deb-src.list
 fi
 if [ -f /etc/apt/sources.list.d/debian.sources ]; then
   sed -i 's/^Types: deb$/Types: deb deb-src/' /etc/apt/sources.list.d/debian.sources
@@ -157,16 +157,16 @@ BUILD_LOGFILE="${INPUT_OUTPUT_PATH}/${BUILD_LOGFILE_SOURCE}_${BUILD_LOGFILE_VERS
 BUILD_COMMAND=(eatmydata dpkg-buildpackage)
 # --build=foo may not be supported by older releases, so use short flags instead.
 case "${INPUT_BUILD_TYPE}" in
-  all) BUILD_COMMAND+=("-A") ;;
-  any) BUILD_COMMAND+=("-B") ;;
-  binary) BUILD_COMMAND+=("-b") ;;
-  full) BUILD_COMMAND+=("-F") ;;
-  source) BUILD_COMMAND+=("-S") ;;
-  "source,all") BUILD_COMMAND+=("-g") ;;
-  "source,any") BUILD_COMMAND+=("-G") ;;
+all) BUILD_COMMAND+=("-A") ;;
+any) BUILD_COMMAND+=("-B") ;;
+binary) BUILD_COMMAND+=("-b") ;;
+full) BUILD_COMMAND+=("-F") ;;
+source) BUILD_COMMAND+=("-S") ;;
+"source,all") BUILD_COMMAND+=("-g") ;;
+"source,any") BUILD_COMMAND+=("-G") ;;
 esac
 test -z "${CROSS_COMPILING}" || BUILD_COMMAND+=(--host-arch "${INPUT_HOST_ARCH}" "-Pcross,nocheck")
-IFS=" " read -r -a dpkgargs <<< "${INPUT_BUILD_ARGS}"
+IFS=" " read -r -a dpkgargs <<<"${INPUT_BUILD_ARGS}"
 [ ${#dpkgargs[@]} -eq 0 ] || BUILD_COMMAND+=("${dpkgargs[@]}")
 # Set architecture to correct in case it is i386 to avoid pitfalls (See #284)
 test "${INPUT_BUILD_ARCH}" = "i386" && BUILD_COMMAND=(/usr/bin/setarch i686 "${BUILD_COMMAND[@]}")
@@ -178,10 +178,10 @@ echo "::endgroup::"
 
 # Build package as current user
 echo "::group::Build"
-{ \
-  SUDO "${BUILD_COMMAND[@]}" && if [ "${INPUT_BUILD_TWICE}" = true ]; then \
-    SUDO "${BUILD_COMMAND[@]}"; \
-  fi; \
+{
+  SUDO "${BUILD_COMMAND[@]}" && if [ "${INPUT_BUILD_TWICE}" = true ]; then
+    SUDO "${BUILD_COMMAND[@]}"
+  fi
 } | SUDO tee "${BUILD_LOGFILE}"
 echo "::endgroup::"
 
@@ -199,14 +199,14 @@ du -sh
 echo "::endgroup::"
 
 echo "::group::Outputs"
-{ \
-  echo "output_path=$(relativepath "${GITHUB_WORKSPACE}" "${INPUT_OUTPUT_PATH}")"; \
-  echo "release=${INPUT_RELEASE}"; \
-  echo "source_path=$(relativepath "${GITHUB_WORKSPACE}" "${INPUT_SOURCE_PATH}")"; \
-  echo "build_arch=${INPUT_BUILD_ARCH}"; \
-  echo "host_arch=${INPUT_HOST_ARCH}"; \
-  echo "build_type=${INPUT_BUILD_TYPE}"; \
-  echo "build_twice=${INPUT_BUILD_TWICE}"; \
-  echo "version_bump=${INPUT_VERSION_BUMP}"; \
+{
+  echo "output_path=$(relativepath "${GITHUB_WORKSPACE}" "${INPUT_OUTPUT_PATH}")"
+  echo "release=${INPUT_RELEASE}"
+  echo "source_path=$(relativepath "${GITHUB_WORKSPACE}" "${INPUT_SOURCE_PATH}")"
+  echo "build_arch=${INPUT_BUILD_ARCH}"
+  echo "host_arch=${INPUT_HOST_ARCH}"
+  echo "build_type=${INPUT_BUILD_TYPE}"
+  echo "build_twice=${INPUT_BUILD_TWICE}"
+  echo "version_bump=${INPUT_VERSION_BUMP}"
 } | tee -a "${GITHUB_OUTPUT}"
 echo "::endgroup::"

@@ -1,0 +1,73 @@
+# Copyright 2023 You-Sheng Yang and others
+# SPDX-License-Identifier: FSFAP
+# Copying and distribution of this file, with or without modification, are
+# permitted in any medium without royalty provided the copyright notice and
+# this notice are preserved. This file is offered as-is, without any warranty.
+---
+name: "Lint Codebase"
+# yamllint disable-line rule:truthy
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: super-linter
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      statuses: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Lint Codebase
+        id: super-linter
+        uses: super-linter/super-linter/slim@v7
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_ACTIONS_CONFIG_FILE: .github/actionlint.yaml
+          LINTER_RULES_PATH: .
+          VALIDATE_ALL_CODEBASE: true
+          VALIDATE_DOCKERFILE_HADOLINT: false
+          VALIDATE_JSCPD: false
+          # TODO: fix pylint errors/warnings
+          VALIDATE_PYTHON_PYLINT: false
+          # TODO: fix prettier errors/warnings
+          VALIDATE_YAML_PRETTIER: false
+
+  licensecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: "Install prerequisites"
+        run: |
+          sudo apt-get update --quiet
+          sudo apt-get install --no-install-recommends -y \
+              licensecheck
+
+      - name: "Check license"
+        run: |
+          PROBLEMS=0
+
+          BAD_FILES=$(licensecheck -r . | grep -Ev '(README.md|.github/linters/super-linter.env)' | grep UNKNOWN) || true
+          if [ -n "${BAD_FILES}" ]; then
+            echo "ERROR: Missing license statement in the following files:"
+            echo "$BAD_FILES"
+            PROBLEMS=$((PROBLEMS + 1))
+          fi
+
+          exit $PROBLEMS

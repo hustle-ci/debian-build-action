@@ -5,6 +5,7 @@
 # this notice are preserved. This file is offered as-is, without any warranty.
 ---
 name: 'tests'
+# yamllint disable-line rule:truthy
 on:
   workflow_call:
     inputs:
@@ -59,4 +60,3 @@ jobs:
           release: ${{ matrix.release }}
           source_path: ${{ steps.clone.outputs.source_path }}
           output_path: ${{ hashFiles('action.yml', 'actions/*/action.yml') }}
-

@@ -5,40 +5,46 @@
 # permitted in any medium without royalty provided the copyright notice and
 # this notice are preserved. This file is offered as-is, without any warranty.
 
-import sys
-import logging
 import argparse
-from junit_xml import TestSuite, TestCase
+import logging
+import sys
+
+from junit_xml import TestCase, TestSuite
 
 
 def main(filename, ignore_warnings=False):
     test_cases = []
     with open(filename) as fh:
         for line in fh:
-            line_split = line.split(':', 2)
+            line_split = line.split(":", 2)
             if len(line_split) < 3:
                 continue
             level, package, message = [x.strip() for x in line_split]
             test_case = TestCase(package)
-            if level == 'E' or (not ignore_warnings and level == 'W'):
+            if level == "E" or (not ignore_warnings and level == "W"):
                 test_case.add_failure_info(message)
             test_cases.append(test_case)
     ts = TestSuite("Lintian2Junit", test_cases)
     return TestSuite.to_xml_string([ts])
 
 
-if __name__ == '__main__':
-    logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s',
-                        level=logging.DEBUG,
-                        stream=sys.stdout)
-    parser = argparse.ArgumentParser(description='Lintian to junit')
-    parser.add_argument('--ignore-warnings',
-                        help='Only consider errors, warnings will be ignored',
-                        action='store_true')
+if __name__ == "__main__":
+    logging.basicConfig(
+        format="%(asctime)s %(levelname)s %(message)s",
+        level=logging.DEBUG,
+        stream=sys.stdout,
+    )
+    parser = argparse.ArgumentParser(description="Lintian to junit")
     parser.add_argument(
-        '-l', '--lintian-file',
+        "--ignore-warnings",
+        help="Only consider errors, warnings will be ignored",
+        action="store_true",
+    )
+    parser.add_argument(
+        "-l",
+        "--lintian-file",
         type=str,
-        help='Lintian output to be parsed',
+        help="Lintian output to be parsed",
         required=True,
     )
     args = parser.parse_args()
