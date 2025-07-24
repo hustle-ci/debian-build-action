@@ -4,9 +4,9 @@
 # permitted in any medium without royalty provided the copyright notice and
 # this notice are preserved. This file is offered as-is, without any warranty.
 ---
-name: 'clone-test-project'
-description: 'Clone Debian grep package for CI tests'
-author: 'vicamo'
+name: "clone-test-project"
+description: "Clone Debian grep package for CI tests"
+author: "vicamo"
 
 inputs:
   vendor:
@@ -24,7 +24,7 @@ outputs:
     value: ${{ steps.clone.outputs.source_path }}
 
 runs:
-  using: 'composite'
+  using: "composite"
   steps:
     - name: Clone debian grep package
       id: clone

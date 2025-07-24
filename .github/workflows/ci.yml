@@ -4,22 +4,22 @@
 # permitted in any medium without royalty provided the copyright notice and
 # this notice are preserved. This file is offered as-is, without any warranty.
 ---
-name: 'CI'
+name: "CI"
 # yamllint disable-line rule:truthy
 on:
   push:
     branches:
       - main
-      - 'releases/v*'
+      - "releases/v*"
     tags:
-      - 'v*'
+      - "v*"
     paths-ignore:
       - LICENSE
-      - 'README.*'
+      - "README.*"
   pull_request:
     paths-ignore:
       - LICENSE
-      - 'README.*'
+      - "README.*"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -52,7 +52,7 @@ jobs:
       - name: Checking image version
         id: image-version
         env:
-          IMAGE_VERSION: '0.0'
+          IMAGE_VERSION: "0.0"
         run: |
           version="${IMAGE_VERSION}"
           case "${{ format('{0}:{1}', github.event_name, github.ref) }}" in
@@ -157,7 +157,7 @@ jobs:
           vendor: ${{ matrix.vendor }}
           release: ${{ matrix.release }}
           architectures: ${{ matrix.architectures }}
-          target: 'base'
+          target: "base"
           image_version: ${{ needs.generate-matrix.outputs.image-version }}
           tag_prefix: ${{ github.run_id }}-
           ghcr_password: ${{ secrets.GITHUB_TOKEN }}
@@ -170,9 +170,9 @@ jobs:
     strategy:
       matrix:
         target:
-          - 'autopkgtest'
-          - 'blhc'
-          - 'gbp'
+          - "autopkgtest"
+          - "blhc"
+          - "gbp"
         include:
           - ${{ fromJSON(needs.generate-matrix.outputs.releases)[fromJSON(needs.generate-matrix.outputs.default_index)] }}
     permissions:
